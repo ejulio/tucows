@@ -1,5 +1,7 @@
 # Tucows test
 
+docker run --name postgres  -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+
 ## Tasks
 
 1. [ ] Download the file
@@ -47,7 +49,7 @@ Cost is not null because it's default value when parsing the graph was suggested
 4. [x] SQL Query
 
 ```
-with recursive cte as (
+with recursive graph_traversal as (
 	select
         graph_id,
 		from_id,
@@ -63,15 +65,15 @@ with recursive cte as (
         e.graph_id,
 		e.from_id,
 		e.to_id,
-		concat(cte.nodes, e.to_id, ',') as nodes,
-		(case when cte.nodes like concat('%,', e.to_id, ',%') then 1 else 0 end) as has_cycle
+		concat(graph_traversal.nodes, e.to_id, ',') as nodes,
+		(case when graph_traversal.nodes like concat('%,', e.to_id, ',%') then 1 else 0 end) as has_cycle
 	from
-		cte
-		join edge e on e.from_id = cte.to_id and e.graph_id = cte.graph_id
+		graph_traversal
+		join edge e on e.from_id = graph_traversal.to_id and e.graph_id = graph_traversal.graph_id
 	where
-		cte.has_cycle = 0
+		graph_traversal.has_cycle = 0
 )
-select exists(select 1 from cte where has_cycle = 1 limit 1) as has_cycle;
+select exists(select 1 from graph_traversal where has_cycle = 1 limit 1) as has_cycle;
 ```
 
 Below you can find some sample data I used for testing.
@@ -142,6 +144,69 @@ insert into edge (graph_id, from_id, to_id, cost) values ('loop', 'a', 'a', 0);
 insert into graph (id, name) values ('no_connections', 'graph');
 
 insert into node (graph_id, id, name) values ('no_connections', 'a', 'a');
+
+-- path
+
+insert into graph (id, name) values ('path', 'graph');
+
+insert into node (graph_id, id, name) values ('path', 'a', 'a');
+insert into node (graph_id, id, name) values ('path', 'b', 'b');
+insert into node (graph_id, id, name) values ('path', 'c', 'c');
+insert into node (graph_id, id, name) values ('path', 'd', 'd');
+insert into node (graph_id, id, name) values ('path', 'e', 'e');
+insert into node (graph_id, id, name) values ('path', 'f', 'f');
+
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'a', 'b', 2);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'a', 'c', 5);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'a', 'f', 6.5);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'b', 'd', 3);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'c', 'e', 3);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'c', 'd', 1);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'd', 'f', 2);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'e', 'f', 2);
+insert into edge (graph_id, from_id, to_id, cost) values ('path', 'e', 'a', 1);
 ```
 
-5. [ ] CLI Program
+5. [x] CLI Program
+
+The schema in the document seemed broken with `"queries": ["cheapest": {...}]`, so I assumed it was meant
+`"queries": [{"cheapest": {...}}]`.
+
+Since there was no explicit mention if the schema should be for a single graph or multiple graphs, I had to change
+the input query adding `graph` to accomodate for the proposed schema above.
+
+Here is an input example for the `path` graph of the previous section
+
+```
+{
+    "queries": [{
+        "paths": {
+            "graph": "path",
+            "start": "a",
+            "end": "f"
+        }
+    }, {
+        "cheapest": {
+            "graph": "path",
+            "start": "a",
+            "end": "f"
+        }
+    }, {
+        "paths": {
+            "graph": "path",
+            "start": "d",
+            "end": "a"
+        }
+    }, {
+        "cheapest": {
+            "graph": "path",
+            "start": "d",
+            "end": "a"
+        }
+    }]
+}
+```
+
+About the JSON library. I opted to keep the standard library as it is simple enough.
+Of course, it comes with the price that I need to check the input and validate the fields.
+But for this sort of thing I think it is way better than adding a new dependency.
