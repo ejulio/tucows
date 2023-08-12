@@ -4,13 +4,16 @@ from io import StringIO
 
 from lxml import etree
 
+
 class InvalidGraph(ValueError):
     pass
+
 
 @dataclass
 class Node:
     id: str
     name: str
+
 
 @dataclass
 class Edge:
@@ -19,12 +22,14 @@ class Edge:
     to_node: Node
     cost: int
 
+
 @dataclass
 class Graph:
     id: str
     name: str
     edges: List[Edge]
     nodes: List[Node]
+
 
 def parse(xml: str) -> Graph:
     doc = etree.parse(StringIO(xml))
@@ -53,11 +58,13 @@ def parse(xml: str) -> Graph:
         edges=edges,
     )
 
+
 def _parse_node(elem) -> Node:
     return Node(
         id=elem.xpath("id/text()")[0],
         name=elem.xpath("name/text()")[0],
     )
+
 
 def _parse_edge(elem, id_to_node) -> Edge:
     edge_id = elem.xpath("id/text()")[0]

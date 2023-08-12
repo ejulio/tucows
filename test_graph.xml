@@ -1,0 +1,27 @@
+<graph>
+    <id>g0</id>
+    <name>The Graph Name</name>
+    <nodes>
+        <node>
+            <id>a</id>
+            <name>A name</name>
+        </node>
+        <node>
+            <id>e</id>
+            <name>E name</name>
+        </node>
+    </nodes>
+    <edges>
+        <edge>
+            <id>e1</id>
+            <from>a</from>
+            <to>e</to>
+            <cost>42.789</cost>
+        </edge>
+        <edge>
+            <id>e2</id>
+            <from>a</from>
+            <to>a</to>
+        </edge>
+    </edges>
+</graph>

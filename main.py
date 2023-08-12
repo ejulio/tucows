@@ -6,6 +6,8 @@ from psycopg.connection import Connection
 from typing import Callable
 
 from tucows.query import query
+from tucows.add import add
+
 
 def main():
     args = parse_args()
@@ -13,9 +15,10 @@ def main():
     if args.query:
         query(lazy_connection(args.db_connection))
     elif args.add:
-        add(lazy_connection(args.db_connection))
+        add(lazy_connection(args.db_connection), file=args.add)
     else:
         raise ValueError("You must specify --query or --add")
+
 
 def parse_args() -> Namespace:
     ap = ArgumentParser()
@@ -49,11 +52,6 @@ def parse_args() -> Namespace:
 def lazy_connection(connection_string: str) -> Callable[[], Connection]:
     """Returns a function to connect with the database with the given connection string"""
     return lambda: psycopg.connect(connection_string)
-
-
-
-def add(connect_db: Callable[[], Connection]):
-    print("add")
 
 
 if __name__ == "__main__":
