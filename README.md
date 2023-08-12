@@ -1,10 +1,65 @@
 # Tucows test
 
-docker run --name postgres  -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+## Running
+
+### Postgres
+
+You'll need `postgres` as it is the DB I used.
+I could have used some ORM like `SQLAlchemy`, but decided to go raw with just `postgres` here.
+
+```
+docker pull postgres
+docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+```
+
+### Build the project docker image
+
+```
+docker build -t tucows .
+```
+
+### Run the container
+
+The command below will run the `tucows` image built above, linking it to the `postgres` instance started above.
+The current working directory is mounted in the container so that any new files created in the directory show up in the container.
+This is useful if you want to add a graph from a local file instead of an URL.
+
+```
+docker run --link postgres -v ${PWD}:/usr/tucows -it tucows /bin/bash
+```
+
+### Run `poetry` shell
+
+```
+poetry shell
+```
+
+### Run tasks
+
+Connection string format `postgresql://user:password@host:port/dbname`. Example of a connection string
+```
+postgresql://postgres:postgres@postgres:5432/postgres
+```
+
+Parse and add graph to the database
+```
+python main.py -a=<path or url to file> --db-connection=<connection string>
+```
+
+Query for paths and cheapest path. This will read from `stdin`.
+When done `CMD+d` or `CTRL+d` to signal `EOF`.
+
+```
+python main.py -q --db-connection=<connection string>
+```
+
+### Unit tests
+
+There's a small suite of unit tests that can be run with `pytest` within `poetry shell`.
 
 ## Tasks
 
-1. [ ] Download the file
+1. [x] Open/Download the file
 2. [x] Parse graph
 `lxml` was used just because of XSD validation.
 I think this was a simple solution to validate the XML file, instead of writing the rules in code.
